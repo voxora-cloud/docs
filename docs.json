@@ -1,6 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "Voxora",
+  "theme": "mint",
   "logo": {
     "dark": "/logo/dark.svg",
     "light": "/logo/light.svg"
@@ -25,12 +26,7 @@
     "name": "Dashboard",
     "url": "https://www.voxora.cloud"
   },
-  "tabs": [
-    {
-      "name": "API Reference",
-      "url": "api-reference"
-    }
-  ],
+  "tabs": [],
   "anchors": [
     {
       "name": "GitHub",
@@ -73,31 +69,7 @@
       "group": "Deployment",
       "pages": [
         "deployment/overview",
-        "deployment/web-app",
-        "deployment/api-server"
-      ]
-    },
-    {
-      "group": "Widget Integration",
-      "pages": [
-        "widget/overview",
-        "widget/installation",
-        "widget/customization"
-      ]
-    },
-    {
-      "group": "API Documentation",
-      "pages": [
-        "api-reference/introduction",
-        "api-reference/authentication",
-        "api-reference/endpoints"
-      ]
-    },
-    {
-      "group": "Contributing",
-      "pages": [
-        "contributing/guidelines",
-        "contributing/code-style"
+        "deployment/web-app"
       ]
     }
   ],
