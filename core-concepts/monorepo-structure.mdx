@@ -1,0 +1,353 @@
+---
+title: "Monorepo Structure"
+description: "Understanding Voxora's monorepo organization"
+---
+
+## Overview
+
+Voxora uses a monorepo architecture managed with npm workspaces and Turborepo. This allows for efficient code sharing, consistent tooling, and simplified dependency management across multiple applications and packages.
+
+## Directory Structure
+
+```
+voxora/
+├── apps/
+│   ├── web/              # Next.js frontend application
+│   └── api/              # Express backend server
+├── packages/
+│   ├── eslint-config/    # Shared ESLint configuration
+│   └── typescript-config/ # Shared TypeScript configuration
+├── docker/
+│   └── docker-compose.dev.yml # Local development services
+├── .github/
+│   └── workflows/        # CI/CD workflows
+├── .vscode/
+│   └── settings.json     # VS Code workspace settings
+├── turbo.json           # Turborepo configuration
+├── package.json         # Root package.json
+└── Makefile            # Build automation
+```
+
+## Apps Directory
+
+### apps/web
+
+The Next.js frontend application that provides the main user interface.
+
+```
+apps/web/
+├── app/                 # Next.js App Router
+│   ├── (auth)/         # Authentication routes
+│   ├── (dashboard)/    # Dashboard routes
+│   ├── api/            # API routes
+│   └── layout.tsx      # Root layout
+├── components/         # React components
+│   ├── ui/            # UI primitives
+│   └── features/      # Feature-specific components
+├── lib/               # Utility functions
+├── public/            # Static assets
+├── styles/            # Global styles
+├── .env.development   # Development environment template
+├── next.config.js     # Next.js configuration
+├── tailwind.config.js # Tailwind CSS configuration
+└── package.json
+```
+
+**Key Technologies:**
+- Next.js 15 (App Router)
+- React 19
+- Tailwind CSS
+- TypeScript
+- Socket.IO Client
+
+### apps/api
+
+The Express backend server handling API requests and WebSocket connections.
+
+```
+apps/api/
+├── src/
+│   ├── controllers/    # Request handlers
+│   ├── models/        # Mongoose schemas
+│   ├── routes/        # API routes
+│   ├── services/      # Business logic
+│   ├── middleware/    # Express middleware
+│   ├── socket/        # Socket.IO handlers
+│   ├── utils/         # Helper functions
+│   ├── config/        # Configuration files
+│   └── index.js       # Entry point
+├── public/
+│   ├── widget/        # Chat widget files
+│   └── widget-loader.js
+├── .env.development   # Development environment template
+└── package.json
+```
+
+**Key Technologies:**
+- Express 5
+- Socket.IO
+- MongoDB (Mongoose)
+- Redis
+- JWT Authentication
+
+## Packages Directory
+
+Shared packages used across multiple applications.
+
+### packages/eslint-config
+
+<Card title="Shared ESLint Configuration" icon="shield-check">
+  Consistent linting rules across all apps and packages
+</Card>
+
+```javascript
+// Usage in apps
+{
+  "extends": ["@voxora/eslint-config"]
+}
+```
+
+### packages/typescript-config
+
+<Card title="Shared TypeScript Configuration" icon="code">
+  Base TypeScript configuration for type safety
+</Card>
+
+```json
+// Usage in apps
+{
+  "extends": "@voxora/typescript-config/nextjs.json"
+}
+```
+
+## Docker Services
+
+The `docker/` directory contains Docker Compose configurations for local development.
+
+```yaml docker-compose.dev.yml
+services:
+  mongodb:
+    image: mongo:latest
+    ports: ["27017:27017"]
+    
+  redis:
+    image: redis:alpine
+    ports: ["6379:6379"]
+    
+  mongo-express:
+    image: mongo-express:latest
+    ports: ["8081:8081"]
+    
+  mailhog:
+    image: mailhog/mailhog
+    ports: ["1025:1025", "8025:8025"]
+```
+
+## Configuration Files
+
+### turbo.json
+
+Defines build pipeline and caching strategy for Turborepo.
+
+```json
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "outputs": []
+    }
+  }
+}
+```
+
+### Root package.json
+
+Defines workspace scripts and dependencies.
+
+```json
+{
+  "name": "voxora",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:full": "npm run docker:start && turbo run dev",
+    "build": "turbo run build",
+    "docker:start": "docker-compose -f docker/docker-compose.dev.yml up -d",
+    "docker:stop": "docker-compose -f docker/docker-compose.dev.yml down"
+  }
+}
+```
+
+## Workspace Management
+
+### Adding Dependencies
+
+<Tabs>
+  <Tab title="Root Workspace">
+    ```bash
+    npm install -w root <package-name>
+    ```
+  </Tab>
+  <Tab title="Specific App">
+    ```bash
+    npm install -w apps/web <package-name>
+    npm install -w apps/api <package-name>
+    ```
+  </Tab>
+  <Tab title="Shared Package">
+    ```bash
+    npm install -w packages/eslint-config <package-name>
+    ```
+  </Tab>
+</Tabs>
+
+### Running Scripts
+
+<CodeGroup>
+
+```bash All workspaces
+npm run dev
+```
+
+```bash Specific workspace
+npm run dev -w apps/web
+npm run build -w apps/api
+```
+
+```bash With Turbo filtering
+npx turbo run build --filter=apps/web
+```
+
+</CodeGroup>
+
+## Benefits of Monorepo
+
+<CardGroup cols={2}>
+  <Card title="Code Sharing" icon="share-nodes">
+    Share configurations, utilities, and types across apps
+  </Card>
+  <Card title="Consistent Tooling" icon="toolbox">
+    Single set of linting, formatting, and build tools
+  </Card>
+  <Card title="Atomic Changes" icon="code-commit">
+    Update multiple apps in a single commit
+  </Card>
+  <Card title="Simplified CI/CD" icon="rotate">
+    Build and test all apps together
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+### 1. Dependency Management
+
+<Tip>
+  Install shared dependencies at the root level when possible to reduce duplication.
+</Tip>
+
+```bash
+# Good: Install at root
+npm install -w root typescript
+
+# Only when needed: Install per workspace
+npm install -w apps/web next
+```
+
+### 2. Shared Code
+
+<Warning>
+  Create shared packages for code used in multiple apps instead of duplicating.
+</Warning>
+
+```
+packages/
+└── shared-types/
+    ├── index.ts
+    └── package.json
+```
+
+### 3. Build Order
+
+Turborepo automatically handles build dependencies. Define them in `turbo.json`:
+
+```json
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"]  // Build dependencies first
+    }
+  }
+}
+```
+
+## Development Workflow
+
+<Steps>
+  <Step title="Install Dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  <Step title="Start Docker Services">
+    ```bash
+    npm run docker:start
+    ```
+  </Step>
+  <Step title="Start Development Servers">
+    ```bash
+    npm run dev
+    ```
+  </Step>
+  <Step title="Make Changes">
+    Edit files in any workspace
+  </Step>
+  <Step title="Build for Production">
+    ```bash
+    npm run build
+    ```
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Architecture"
+    icon="diagram-project"
+    href="/core-concepts/architecture"
+  >
+    Understand the system architecture
+  </Card>
+  <Card
+    title="Development Setup"
+    icon="code"
+    href="/development/setup"
+  >
+    Set up your development environment
+  </Card>
+  <Card
+    title="Scripts Reference"
+    icon="terminal"
+    href="/development/scripts"
+  >
+    Learn about available npm scripts
+  </Card>
+  <Card
+    title="Contributing"
+    icon="code-pull-request"
+    href="/contributing/guidelines"
+  >
+    Contributing guidelines
+  </Card>
+</CardGroup>

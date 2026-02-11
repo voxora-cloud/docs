@@ -1,5 +1,107 @@
 ---
-title: "Introduction"
+title: "Welcome to Voxora"
+description: "Modern, realtime customer support platform built for developers"
 ---
 
-this is intro page
+<img
+  className="block dark:hidden"
+  src="/images/hero-light.svg"
+  alt="Hero Light"
+/>
+<img
+  className="hidden dark:block"
+  src="/images/hero-dark.svg"
+  alt="Hero Dark"
+/>
+
+## What is Voxora?
+
+Voxora is an open-source, developer-friendly live chat and voice support solution built for modern web applications. It provides a complete customer support platform with realtime messaging, team management, and an embeddable chat widget.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card
+    title="Realtime Chat"
+    icon="messages"
+    href="/core-concepts/realtime-chat"
+  >
+    Built with Socket.IO for instant, bidirectional communication
+  </Card>
+  <Card
+    title="Modern Stack"
+    icon="code"
+    href="/core-concepts/architecture"
+  >
+    Next.js 15, React 19, Express 5, MongoDB, and Redis
+  </Card>
+  <Card
+    title="Embeddable Widget"
+    icon="window"
+    href="/widget/overview"
+  >
+    Lightweight chat widget that integrates seamlessly into any website
+  </Card>
+  <Card
+    title="Team Management"
+    icon="users"
+    href="/development/setup"
+  >
+    Manage agents, departments, and customer conversations
+  </Card>
+</CardGroup>
+
+## Monorepo Structure
+
+Voxora is organized as a monorepo with the following components:
+
+- **apps/web**: Next.js 15 with React 19 (App Router, Tailwind CSS)
+- **apps/api**: Express 5 + Socket.IO backend with MongoDB and Redis
+- **packages/***: Shared ESLint and TypeScript configurations
+- **docker/**: Local development services (MongoDB, Redis, Mongo Express, MailHog)
+
+## Quick Links
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart Guide"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Get up and running in 5 minutes
+  </Card>
+  <Card
+    title="API Reference"
+    icon="book"
+    href="/api-reference/introduction"
+  >
+    Complete API documentation
+  </Card>
+  <Card
+    title="GitHub Repository"
+    icon="github"
+    href="https://github.com/voxora-cloud/voxora"
+  >
+    View source code and contribute
+  </Card>
+  <Card
+    title="Widget Integration"
+    icon="code"
+    href="/widget/installation"
+  >
+    Add Voxora to your website
+  </Card>
+</CardGroup>
+
+## Who is Voxora for?
+
+Voxora is perfect for:
+
+- **Startups** looking for a self-hosted customer support solution
+- **Developers** who want full control over their support infrastructure
+- **Teams** that need realtime collaboration features
+- **Businesses** seeking an open-source alternative to proprietary chat platforms
+
+## Getting Started
+
+Ready to get started? Follow our [quickstart guide](/quickstart) to set up Voxora in minutes, or dive into the [installation instructions](/installation) for a detailed setup walkthrough.

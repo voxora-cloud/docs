@@ -1,0 +1,170 @@
+---
+title: "Quickstart"
+description: "Get Voxora running locally in 5 minutes"
+---
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+<AccordionGroup>
+  <Accordion title="Docker Desktop">
+    Required for running MongoDB, Redis, and other services locally.
+    [Download Docker Desktop](https://www.docker.com/products/docker-desktop)
+  </Accordion>
+  <Accordion title="Node.js >= 18">
+    Voxora requires Node.js version 18 or higher.
+    [Download Node.js](https://nodejs.org/)
+  </Accordion>
+  <Accordion title="npm 10+">
+    Usually comes with Node.js installation.
+    Verify with: `npm --version`
+  </Accordion>
+</AccordionGroup>
+
+## Step 1: Fork and Clone
+
+Fork the repository to your GitHub account:
+
+```bash
+# Fork the repository on GitHub first, then clone your fork
+git clone <your-fork-url>
+cd voxora
+```
+
+## Step 2: Install Dependencies
+
+Install all dependencies for the monorepo:
+
+```bash
+npm install
+```
+
+## Step 3: Set Up Environment Variables
+
+Copy the development environment files for both apps:
+
+<CodeGroup>
+
+```bash apps/api
+cd apps/api
+cp .env.development .env
+```
+
+```bash apps/web
+cd apps/web
+cp .env.development .env
+```
+
+</CodeGroup>
+
+<Note>
+  The default environment files are pre-configured for local development. You can modify them as needed for your setup.
+</Note>
+
+## Step 4: Start Everything
+
+Launch Docker services and development servers:
+
+```bash
+npm run dev:full
+```
+
+This command will:
+
+1. Start Redis, MongoDB, and Mongo Express in Docker
+2. Run the web and API dev servers via Turborepo
+3. Set up MailHog for local email testing
+
+## Step 5: Access Your Applications
+
+<CardGroup cols={2}>
+  <Card title="Web App" icon="browser" href="http://localhost:3000">
+    http://localhost:3000
+  </Card>
+  <Card title="API Server" icon="server" href="http://localhost:3002">
+    http://localhost:3002
+  </Card>
+  <Card title="Mongo Express" icon="database" href="http://localhost:8081">
+    http://localhost:8081
+  </Card>
+  <Card title="MailHog UI" icon="envelope" href="http://localhost:8025">
+    http://localhost:8025
+  </Card>
+</CardGroup>
+
+### API Endpoints
+
+- **REST API**: `http://localhost:3002/api/v1`
+- **Health Check**: `http://localhost:3002/`
+- **Widget HTML**: `http://localhost:3002/widget`
+- **Widget Loader**: `http://localhost:3002/widget-loader.js`
+
+### Email Testing
+
+- **MailHog SMTP**: `localhost:1025` (for sending emails)
+- **MailHog Web UI**: `http://localhost:8025` (to view emails)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Architecture Overview"
+    icon="diagram-project"
+    href="/core-concepts/architecture"
+  >
+    Learn about Voxora's architecture
+  </Card>
+  <Card
+    title="Development Guide"
+    icon="code"
+    href="/development/setup"
+  >
+    Detailed development setup
+  </Card>
+  <Card
+    title="Widget Integration"
+    icon="window"
+    href="/widget/installation"
+  >
+    Add the chat widget to your site
+  </Card>
+  <Card
+    title="API Reference"
+    icon="book"
+    href="/api-reference/introduction"
+  >
+    Explore the API endpoints
+  </Card>
+</CardGroup>
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="Port already in use">
+    If ports 3000, 3002, 8081, or 8025 are already in use, either:
+    - Stop conflicting services
+    - Change ports in `docker/docker-compose.dev.yml` and environment files
+  </Accordion>
+  
+  <Accordion title="Docker not starting">
+    Ensure Docker Desktop is running before executing `npm run dev:full`.
+    You can verify with: `docker ps`
+  </Accordion>
+  
+  <Accordion title="MongoDB authentication issues">
+    Credentials are seeded from `.env` files. Check:
+    - `apps/api/.env.*`
+    - `docker/docker-compose.dev.yml`
+  </Accordion>
+</AccordionGroup>
+
+## Stopping Services
+
+To stop Docker services:
+
+```bash
+npm run docker:stop
+```
+
+To stop development servers, press `Ctrl+C` in the terminal where they're running.

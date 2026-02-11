@@ -1,0 +1,455 @@
+---
+title: "Environment Variables"
+description: "Complete reference for all environment variables in Voxora"
+---
+
+## Overview
+
+Voxora uses environment variables to configure both the web application and API server. This guide covers all available variables and their purposes.
+
+## API Server Variables
+
+Located in `apps/api/.env`
+
+### Server Configuration
+
+<ParamField path="PORT" type="number" default="3002">
+  Port number for the API server
+</ParamField>
+
+<ParamField path="NODE_ENV" type="string" default="development">
+  Environment mode: `development`, `staging`, or `production`
+</ParamField>
+
+<ParamField path="LOG_LEVEL" type="string" default="info">
+  Logging level: `error`, `warn`, `info`, `debug`, or `verbose`
+</ParamField>
+
+### Database
+
+<ParamField path="MONGODB_URI" type="string" required>
+  MongoDB connection string
+  
+  **Development:**
+  ```
+  mongodb://admin:password@localhost:27017/voxora?authSource=admin
+  ```
+  
+  **Production:**
+  ```
+  mongodb+srv://user:pass@cluster.mongodb.net/voxora
+  ```
+</ParamField>
+
+<ParamField path="MONGODB_MAX_POOL_SIZE" type="number" default="10">
+  Maximum number of connections in the MongoDB connection pool
+</ParamField>
+
+### Redis Cache
+
+<ParamField path="REDIS_HOST" type="string" default="localhost">
+  Redis server hostname
+</ParamField>
+
+<ParamField path="REDIS_PORT" type="number" default="6379">
+  Redis server port
+</ParamField>
+
+<ParamField path="REDIS_PASSWORD" type="string">
+  Redis authentication password (optional for local dev)
+</ParamField>
+
+<ParamField path="REDIS_DB" type="number" default="0">
+  Redis database number (0-15)
+</ParamField>
+
+### Authentication
+
+<ParamField path="JWT_SECRET" type="string" required>
+  Secret key for signing JWT tokens
+  
+  <Warning>
+    **Never** commit this to version control! Use a strong, random value in production.
+  </Warning>
+  
+  Generate a secure secret:
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+  ```
+</ParamField>
+
+<ParamField path="JWT_EXPIRES_IN" type="string" default="7d">
+  JWT token expiration time (e.g., `1h`, `7d`, `30d`)
+</ParamField>
+
+<ParamField path="JWT_REFRESH_EXPIRES_IN" type="string" default="30d">
+  Refresh token expiration time
+</ParamField>
+
+### CORS
+
+<ParamField path="CORS_ORIGIN" type="string" required>
+  Allowed origins for CORS
+  
+  **Single origin:**
+  ```
+  http://localhost:3000
+  ```
+  
+  **Multiple origins:**
+  ```
+  http://localhost:3000,https://app.voxora.cloud
+  ```
+  
+  **All origins (dev only):**
+  ```
+  *
+  ```
+</ParamField>
+
+### Email (SMTP)
+
+<ParamField path="SMTP_HOST" type="string" required>
+  SMTP server hostname
+  
+  - **Development:** `localhost` (MailHog)
+  - **Production:** Your SMTP provider
+</ParamField>
+
+<ParamField path="SMTP_PORT" type="number" required>
+  SMTP server port
+  
+  - **MailHog:** `1025`
+  - **Gmail:** `587`
+  - **SendGrid:** `587`
+</ParamField>
+
+<ParamField path="SMTP_USER" type="string">
+  SMTP authentication username
+</ParamField>
+
+<ParamField path="SMTP_PASS" type="string">
+  SMTP authentication password
+</ParamField>
+
+<ParamField path="SMTP_SECURE" type="boolean" default="false">
+  Use TLS/SSL for SMTP connection
+</ParamField>
+
+<ParamField path="EMAIL_FROM" type="string" default="noreply@voxora.cloud">
+  Default sender email address
+</ParamField>
+
+### File Uploads
+
+<ParamField path="UPLOAD_DIR" type="string" default="./uploads">
+  Directory for storing uploaded files
+</ParamField>
+
+<ParamField path="MAX_FILE_SIZE" type="number" default="10485760">
+  Maximum file size in bytes (default: 10MB)
+</ParamField>
+
+<ParamField path="ALLOWED_FILE_TYPES" type="string" default="image/jpeg,image/png,image/gif,application/pdf">
+  Comma-separated list of allowed MIME types
+</ParamField>
+
+### Rate Limiting
+
+<ParamField path="RATE_LIMIT_WINDOW_MS" type="number" default="900000">
+  Rate limit window in milliseconds (default: 15 minutes)
+</ParamField>
+
+<ParamField path="RATE_LIMIT_MAX_REQUESTS" type="number" default="100">
+  Maximum requests per window
+</ParamField>
+
+### Widget
+
+<ParamField path="WIDGET_CDN_URL" type="string">
+  CDN URL for serving widget assets (optional)
+</ParamField>
+
+<ParamField path="WIDGET_ALLOWED_DOMAINS" type="string">
+  Comma-separated list of domains allowed to embed the widget
+  
+  ```
+  example.com,*.example.com,localhost:*
+  ```
+</ParamField>
+
+## Web Application Variables
+
+Located in `apps/web/.env`
+
+### API Configuration
+
+<ParamField path="NEXT_PUBLIC_API_URL" type="string" required>
+  Base URL for API requests
+  
+  **Development:**
+  ```
+  http://localhost:3002
+  ```
+  
+  **Production:**
+  ```
+  https://api.voxora.cloud
+  ```
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_SOCKET_URL" type="string" required>
+  WebSocket server URL (usually same as API URL)
+</ParamField>
+
+### Widget
+
+<ParamField path="NEXT_PUBLIC_WIDGET_URL" type="string">
+  URL for the embeddable chat widget
+  
+  ```
+  http://localhost:3002/widget
+  ```
+</ParamField>
+
+### Features
+
+<ParamField path="NEXT_PUBLIC_ENABLE_ANALYTICS" type="boolean" default="false">
+  Enable analytics tracking
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_ENABLE_NOTIFICATIONS" type="boolean" default="true">
+  Enable browser notifications
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_MAX_FILE_SIZE" type="number" default="10485760">
+  Maximum file upload size (must match API setting)
+</ParamField>
+
+### Analytics
+
+<ParamField path="NEXT_PUBLIC_GA_MEASUREMENT_ID" type="string">
+  Google Analytics measurement ID
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_SENTRY_DSN" type="string">
+  Sentry DSN for error tracking
+</ParamField>
+
+## Docker Environment
+
+Variables in `docker/docker-compose.dev.yml`
+
+```yaml
+services:
+  mongodb:
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: voxora
+  
+  redis:
+    # No authentication in dev mode
+  
+  mongo-express:
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: pass
+```
+
+## Environment Templates
+
+### Development Template
+
+<CodeGroup>
+
+```bash apps/api/.env.development
+# Server
+PORT=3002
+NODE_ENV=development
+LOG_LEVEL=debug
+
+# Database
+MONGODB_URI=mongodb://admin:password@localhost:27017/voxora?authSource=admin
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Auth
+JWT_SECRET=dev-secret-change-in-production
+JWT_EXPIRES_IN=7d
+
+# CORS
+CORS_ORIGIN=http://localhost:3000
+
+# Email (MailHog)
+SMTP_HOST=localhost
+SMTP_PORT=1025
+EMAIL_FROM=noreply@voxora.local
+```
+
+```bash apps/web/.env.development
+NEXT_PUBLIC_API_URL=http://localhost:3002
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3002
+NEXT_PUBLIC_WIDGET_URL=http://localhost:3002/widget
+NEXT_PUBLIC_ENABLE_ANALYTICS=false
+```
+
+</CodeGroup>
+
+### Production Template
+
+<CodeGroup>
+
+```bash apps/api/.env.production
+# Server
+PORT=3002
+NODE_ENV=production
+LOG_LEVEL=info
+
+# Database
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/voxora
+
+# Redis
+REDIS_HOST=your-redis.cloud
+REDIS_PORT=6379
+REDIS_PASSWORD=your-redis-password
+
+# Auth
+JWT_SECRET=your-super-secret-key-here
+JWT_EXPIRES_IN=7d
+
+# CORS
+CORS_ORIGIN=https://app.voxora.cloud
+
+# Email
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASS=your-sendgrid-api-key
+SMTP_SECURE=true
+EMAIL_FROM=support@voxora.cloud
+```
+
+```bash apps/web/.env.production
+NEXT_PUBLIC_API_URL=https://api.voxora.cloud
+NEXT_PUBLIC_SOCKET_URL=https://api.voxora.cloud
+NEXT_PUBLIC_WIDGET_URL=https://cdn.voxora.cloud/widget
+NEXT_PUBLIC_ENABLE_ANALYTICS=true
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+```
+
+</CodeGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Never Commit Secrets" icon="lock">
+    Add `.env` files to `.gitignore`
+  </Card>
+  <Card title="Use Templates" icon="file">
+    Commit `.env.example` as a reference
+  </Card>
+  <Card title="Validate on Startup" icon="check">
+    Check required variables exist
+  </Card>
+  <Card title="Document Changes" icon="book">
+    Update docs when adding variables
+  </Card>
+</CardGroup>
+
+### Validation Example
+
+```javascript apps/api/src/config/env.js
+const required = [
+  'MONGODB_URI',
+  'JWT_SECRET',
+  'CORS_ORIGIN'
+];
+
+required.forEach(key => {
+  if (!process.env[key]) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+});
+```
+
+## Loading Environment Variables
+
+### Next.js
+
+Next.js automatically loads `.env*` files:
+
+- `.env` - All environments
+- `.env.local` - Local overrides (not committed)
+- `.env.development` - Development only
+- `.env.production` - Production only
+
+Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
+
+### Node.js (API)
+
+Use `dotenv` package:
+
+```javascript
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const config = {
+  port: process.env.PORT || 3002,
+  mongoUri: process.env.MONGODB_URI,
+  jwtSecret: process.env.JWT_SECRET
+};
+```
+
+## Security Considerations
+
+<Warning>
+  **Production Security Checklist:**
+  
+  - ✓ Use strong, random JWT secrets
+  - ✓ Enable HTTPS/TLS everywhere
+  - ✓ Restrict CORS to specific domains
+  - ✓ Use secure SMTP with authentication
+  - ✓ Store secrets in a secure vault (not .env files)
+  - ✓ Rotate secrets regularly
+  - ✓ Use environment-specific values
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Development Setup"
+    icon="code"
+    href="/development/setup"
+  >
+    Complete development guide
+  </Card>
+  <Card
+    title="Docker Services"
+    icon="docker"
+    href="/development/docker-services"
+  >
+    Managing local services
+  </Card>
+  <Card
+    title="Deployment"
+    icon="rocket"
+    href="/deployment/overview"
+  >
+    Deploy to production
+  </Card>
+  <Card
+    title="Security"
+    icon="shield"
+    href="/deployment/security"
+  >
+    Security best practices
+  </Card>
+</CardGroup>

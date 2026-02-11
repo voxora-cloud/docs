@@ -1,0 +1,565 @@
+---
+title: "Scripts Reference"
+description: "Complete reference for all npm scripts in Voxora"
+---
+
+## Overview
+
+Voxora provides npm scripts for development, building, testing, and deployment. All scripts can be run from the root directory.
+
+## Development Scripts
+
+### dev
+
+Start all development servers (requires Docker to be started separately):
+
+```bash
+npm run dev
+```
+
+**What it does:**
+- Starts Next.js web app on port 3000
+- Starts Express API server on port 3002
+- Enables hot reload for both apps
+- Uses Turborepo for parallel execution
+
+### dev:full
+
+Start Docker services and all development servers:
+
+```bash
+npm run dev:full
+```
+
+**What it does:**
+- Starts Docker services (MongoDB, Redis, etc.)
+- Starts all development servers
+- One command for complete setup
+
+### dev (workspace-specific)
+
+Start individual workspace in development mode:
+
+<CodeGroup>
+
+```bash Web only
+npm run dev -w apps/web
+```
+
+```bash API only
+npm run dev -w apps/api
+```
+
+</CodeGroup>
+
+## Docker Scripts
+
+### docker:start
+
+Start all Docker services in detached mode:
+
+```bash
+npm run docker:start
+```
+
+**Services started:**
+- MongoDB on port 27017
+- Redis on port 6379
+- Mongo Express on port 8081
+- MailHog on ports 1025 (SMTP) and 8025 (UI)
+
+### docker:stop
+
+Stop and remove all Docker containers:
+
+```bash
+npm run docker:stop
+```
+
+<Warning>
+  Containers are removed but volumes are preserved. Use `docker:clean` to remove volumes.
+</Warning>
+
+### docker:clean
+
+Stop containers and remove all volumes (data loss):
+
+```bash
+npm run docker:clean
+# or
+docker-compose -f docker/docker-compose.dev.yml down -v
+```
+
+### docker:logs
+
+View logs from Docker services:
+
+<CodeGroup>
+
+```bash All services
+docker-compose -f docker/docker-compose.dev.yml logs -f
+```
+
+```bash Specific service
+docker-compose -f docker/docker-compose.dev.yml logs -f mongodb
+```
+
+</CodeGroup>
+
+## Build Scripts
+
+### build
+
+Build all applications for production:
+
+```bash
+npm run build
+```
+
+**What it does:**
+- Builds Next.js app (creates `.next` directory)
+- Transpiles API code (if using TypeScript)
+- Generates optimized production bundles
+
+### build (workspace-specific)
+
+Build individual workspace:
+
+<CodeGroup>
+
+```bash Web only
+npm run build -w apps/web
+```
+
+```bash API only
+npm run build -w apps/api
+```
+
+</CodeGroup>
+
+## Testing Scripts
+
+### test
+
+Run all tests across workspaces:
+
+```bash
+npm run test
+```
+
+### test:watch
+
+Run tests in watch mode:
+
+```bash
+npm run test:watch
+```
+
+### test:coverage
+
+Generate test coverage report:
+
+```bash
+npm run test:coverage
+```
+
+**Output:**
+- Coverage report in `coverage/` directory
+- HTML report at `coverage/lcov-report/index.html`
+
+### test (workspace-specific)
+
+<CodeGroup>
+
+```bash Web tests
+npm run test -w apps/web
+```
+
+```bash API tests
+npm run test -w apps/api
+```
+
+</CodeGroup>
+
+## Code Quality Scripts
+
+### lint
+
+Run ESLint on all workspaces:
+
+```bash
+npm run lint
+```
+
+**Checks:**
+- JavaScript/TypeScript syntax errors
+- Code style violations
+- Best practice violations
+
+### lint:fix
+
+Automatically fix linting issues:
+
+```bash
+npm run lint:fix
+```
+
+### format
+
+Format code with Prettier:
+
+```bash
+npm run format
+```
+
+**Formats:**
+- JavaScript/TypeScript files
+- JSON files
+- Markdown files
+- CSS files
+
+### format:check
+
+Check if files are formatted correctly:
+
+```bash
+npm run format:check
+```
+
+## Dependency Management
+
+### install
+
+Install all dependencies:
+
+```bash
+npm install
+```
+
+### update
+
+Update dependencies to latest versions:
+
+```bash
+npm update
+```
+
+### outdated
+
+Check for outdated dependencies:
+
+```bash
+npm outdated
+```
+
+### audit
+
+Check for security vulnerabilities:
+
+```bash
+npm audit
+
+# Auto-fix vulnerabilities
+npm audit fix
+```
+
+## Cleanup Scripts
+
+### clean
+
+Remove build artifacts and dependencies:
+
+```bash
+npm run clean
+```
+
+**Removes:**
+- `node_modules` directories
+- `.next` directory
+- `dist` directories
+- Build caches
+
+### clean:full
+
+Complete cleanup including Docker volumes:
+
+```bash
+npm run clean:full
+```
+
+<Warning>
+  This removes all data from Docker containers!
+</Warning>
+
+## Database Scripts
+
+### db:seed
+
+Seed database with sample data:
+
+```bash
+npm run db:seed -w apps/api
+```
+
+### db:reset
+
+Reset database to initial state:
+
+```bash
+npm run db:reset -w apps/api
+```
+
+### db:migrate
+
+Run database migrations:
+
+```bash
+npm run db:migrate -w apps/api
+```
+
+## Production Scripts
+
+### start
+
+Start production servers:
+
+<CodeGroup>
+
+```bash All apps
+npm run start
+```
+
+```bash Web only
+npm run start -w apps/web
+```
+
+```bash API only
+npm run start -w apps/api
+```
+
+</CodeGroup>
+
+<Note>
+  Must run `npm run build` before `npm run start`
+</Note>
+
+## Utility Scripts
+
+### type-check
+
+Run TypeScript type checking:
+
+```bash
+npm run type-check
+```
+
+### validate
+
+Run all validation checks:
+
+```bash
+npm run validate
+```
+
+**Runs:**
+- Type checking
+- Linting
+- Tests
+- Format check
+
+## Custom Makefile Commands
+
+The `Makefile` provides additional convenience commands:
+
+### Setup
+
+```bash
+make setup
+```
+
+Equivalent to:
+- `npm install`
+- `npm run docker:start`
+- Copy environment files
+
+### Dev
+
+```bash
+make dev
+```
+
+Equivalent to `npm run dev:full`
+
+### Reset
+
+```bash
+make reset
+```
+
+Complete reset:
+- Stop Docker
+- Clean all files
+- Reinstall dependencies
+- Restart services
+
+## Turborepo Scripts
+
+Voxora uses Turborepo for efficient monorepo management.
+
+### Run with filtering
+
+<CodeGroup>
+
+```bash Filter by package
+npx turbo run build --filter=apps/web
+```
+
+```bash Run in parallel
+npx turbo run lint test --parallel
+```
+
+```bash Force rebuild
+npx turbo run build --force
+```
+
+</CodeGroup>
+
+### Clear Turbo cache
+
+```bash
+npx turbo run build --force --no-cache
+```
+
+## Git Hooks
+
+Pre-commit hooks run automatically:
+
+### Pre-commit
+
+Runs on `git commit`:
+- Lint staged files
+- Format staged files
+- Run type check
+
+### Pre-push
+
+Runs on `git push`:
+- Run all tests
+- Check for build errors
+
+## CI/CD Scripts
+
+Scripts used in GitHub Actions:
+
+### ci
+
+Run CI validation:
+
+```bash
+npm run ci
+```
+
+**Runs:**
+- Install dependencies
+- Type check
+- Lint
+- Test
+- Build
+
+### deploy
+
+Deploy to production:
+
+```bash
+npm run deploy
+```
+
+## Environment-Specific Scripts
+
+### dev:https
+
+Run development server with HTTPS:
+
+```bash
+npm run dev:https -w apps/web
+```
+
+### debug
+
+Start in debug mode:
+
+```bash
+npm run debug -w apps/api
+```
+
+Starts server with debugger attached on port 9229.
+
+## Script Chaining
+
+Run multiple scripts in sequence:
+
+```bash
+# Clean, install, and start
+npm run clean && npm install && npm run dev
+
+# Build and start
+npm run build && npm run start
+
+# Lint, test, and build
+npm run lint && npm run test && npm run build
+```
+
+## Workspace-Specific Scripts
+
+Each workspace may have additional scripts. Check `package.json` in:
+
+- `apps/web/package.json`
+- `apps/api/package.json`
+- `packages/*/package.json`
+
+## Quick Reference Table
+
+| Script | Description | When to Use |
+|--------|-------------|-------------|
+| `npm run dev` | Start dev servers | Daily development |
+| `npm run dev:full` | Start Docker + dev servers | First time setup |
+| `npm run build` | Build for production | Before deployment |
+| `npm run test` | Run tests | Before committing |
+| `npm run lint` | Check code quality | Before committing |
+| `npm run format` | Format code | After writing code |
+| `npm run docker:start` | Start services | When services stopped |
+| `npm run docker:stop` | Stop services | End of day |
+| `npm run clean` | Clean builds | Troubleshooting |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Development Setup"
+    icon="code"
+    href="/development/setup"
+  >
+    Complete development guide
+  </Card>
+  <Card
+    title="Docker Services"
+    icon="docker"
+    href="/development/docker-services"
+  >
+    Managing Docker services
+  </Card>
+  <Card
+    title="Contributing"
+    icon="code-pull-request"
+    href="/contributing/guidelines"
+  >
+    How to contribute
+  </Card>
+  <Card
+    title="Deployment"
+    icon="rocket"
+    href="/deployment/overview"
+  >
+    Deploy to production
+  </Card>
+</CardGroup>

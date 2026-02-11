@@ -1,0 +1,495 @@
+---
+title: "Web App Deployment"
+description: "Deploy the Next.js web application to production"
+---
+
+## Overview
+
+The Voxora web app is a Next.js 15 application that can be deployed to various platforms optimized for serverless or traditional hosting.
+
+## Recommended Platforms
+
+<CardGroup cols={2}>
+  <Card title="Vercel" icon="triangle" href="#vercel-deployment">
+    Best for Next.js apps (by the creators of Next.js)
+  </Card>
+  <Card title="Netlify" icon="n" href="#netlify-deployment">
+    Great DX with automated deployments
+  </Card>
+  <Card title="AWS Amplify" icon="aws" href="#aws-amplify">
+    AWS ecosystem integration
+  </Card>
+  <Card title="Self-Hosted" icon="server" href="#self-hosted">
+    Full control with Docker/VPS
+  </Card>
+</CardGroup>
+
+## Build Configuration
+
+### next.config.js
+
+```javascript apps/web/next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'standalone', // For Docker deployments
+  reactStrictMode: true,
+  swcMinify: true,
+  
+  // Environment variables
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
+  },
+  
+  // Image optimization
+  images: {
+    domains: ['cdn.voxora.cloud'],
+    formats: ['image/avif', 'image/webp'],
+  },
+  
+  // Headers for security
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+```
+
+## Vercel Deployment
+
+<Steps>
+  <Step title="Connect Repository">
+    1. Go to [vercel.com](https://vercel.com)
+    2. Click "New Project"
+    3. Import your GitHub repository
+  </Step>
+  
+  <Step title="Configure Project">
+    ```
+    Framework Preset: Next.js
+    Root Directory: apps/web
+    Build Command: npm run build
+    Output Directory: .next
+    ```
+  </Step>
+  
+  <Step title="Add Environment Variables">
+    In Vercel dashboard:
+    ```
+    NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+    NEXT_PUBLIC_SOCKET_URL=https://api.yourdomain.com
+    NEXT_PUBLIC_WIDGET_URL=https://cdn.yourdomain.com/widget
+    ```
+  </Step>
+  
+  <Step title="Deploy">
+    Click "Deploy" - Vercel will build and deploy automatically
+  </Step>
+</Steps>
+
+### vercel.json
+
+```json apps/web/vercel.json
+{
+  "buildCommand": "cd ../.. && npm run build -w apps/web",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && npm install",
+  "devCommand": "npm run dev",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "@api-url",
+    "NEXT_PUBLIC_SOCKET_URL": "@socket-url"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### CLI Deployment
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login
+vercel login
+
+# Deploy from project root
+cd apps/web
+vercel --prod
+
+# Set environment variables
+vercel env add NEXT_PUBLIC_API_URL production
+```
+
+## Netlify Deployment
+
+<Steps>
+  <Step title="Create netlify.toml">
+    ```toml apps/web/netlify.toml
+    [build]
+      command = "npm run build"
+      publish = ".next"
+    
+    [[redirects]]
+      from = "/*"
+      to = "/index.html"
+      status = 200
+    
+    [build.environment]
+      NEXT_PUBLIC_API_URL = "https://api.yourdomain.com"
+    ```
+  </Step>
+  
+  <Step title="Deploy via Git">
+    1. Push to GitHub
+    2. Connect repository in Netlify dashboard
+    3. Configure build settings
+    4. Deploy
+  </Step>
+</Steps>
+
+### Netlify CLI
+
+```bash
+# Install Netlify CLI
+npm i -g netlify-cli
+
+# Login
+netlify login
+
+# Initialize
+cd apps/web
+netlify init
+
+# Deploy
+netlify deploy --prod
+```
+
+## AWS Amplify
+
+<Steps>
+  <Step title="Create App">
+    ```bash
+    amplify init
+    amplify add hosting
+    ```
+  </Step>
+  
+  <Step title="Configure Build">
+    ```yaml amplify.yml
+    version: 1
+    applications:
+      - appRoot: apps/web
+        frontend:
+          phases:
+            preBuild:
+              commands:
+                - npm ci
+            build:
+              commands:
+                - npm run build
+          artifacts:
+            baseDirectory: .next
+            files:
+              - '**/*'
+          cache:
+            paths:
+              - node_modules/**/*
+    ```
+  </Step>
+  
+  <Step title="Deploy">
+    ```bash
+    amplify publish
+    ```
+  </Step>
+</Steps>
+
+## Self-Hosted Deployment
+
+### Docker
+
+Create production Dockerfile:
+
+```dockerfile apps/web/Dockerfile
+# Stage 1: Dependencies
+FROM node:18-alpine AS deps
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Stage 2: Builder
+FROM node:18-alpine AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN npm run build
+
+# Stage 3: Runner
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+
+# Automatically leverage output traces to reduce image size
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+CMD ["node", "server.js"]
+```
+
+### Build and Run
+
+```bash
+# Build image
+docker build -t voxora-web:latest -f apps/web/Dockerfile apps/web
+
+# Run container
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_API_URL=https://api.yourdomain.com \
+  voxora-web:latest
+```
+
+### VPS Deployment (PM2)
+
+```bash
+# SSH into your VPS
+ssh user@yourserver.com
+
+# Clone repository
+git clone https://github.com/yourusername/voxora.git
+cd voxora
+
+# Install dependencies
+npm install
+
+# Build web app
+npm run build -w apps/web
+
+# Install PM2
+npm install -g pm2
+
+# Start with PM2
+cd apps/web
+pm2 start npm --name "voxora-web" -- start
+
+# Save PM2 config
+pm2 save
+
+# Setup startup script
+pm2 startup
+```
+
+### Nginx Reverse Proxy
+
+```nginx /etc/nginx/sites-available/voxora-web
+server {
+    listen 80;
+    server_name app.yourdomain.com;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+## Performance Optimization
+
+### Image Optimization
+
+```javascript next.config.js
+module.exports = {
+  images: {
+    domains: ['cdn.voxora.cloud', 'yourdomain.com'],
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+  },
+};
+```
+
+### Caching Strategy
+
+```javascript
+// Add Cache-Control headers
+export const headers = [
+  {
+    source: '/static/:path*',
+    headers: [
+      {
+        key: 'Cache-Control',
+        value: 'public, max-age=31536000, immutable',
+      },
+    ],
+  },
+];
+```
+
+### Bundle Analysis
+
+```bash
+# Install analyzer
+npm install @next/bundle-analyzer
+
+# Analyze bundle
+ANALYZE=true npm run build
+```
+
+## Environment Variables
+
+<ParamField path="NEXT_PUBLIC_API_URL" type="string" required>
+  API server base URL
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_SOCKET_URL" type="string" required>
+  WebSocket server URL
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_WIDGET_URL" type="string">
+  Chat widget URL
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_ENABLE_ANALYTICS" type="boolean">
+  Enable analytics tracking
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_GA_MEASUREMENT_ID" type="string">
+  Google Analytics ID
+</ParamField>
+
+<ParamField path="NEXT_PUBLIC_SENTRY_DSN" type="string">
+  Sentry error tracking DSN
+</ParamField>
+
+## Monitoring
+
+### Error Tracking (Sentry)
+
+```javascript apps/web/sentry.config.js
+import * as Sentry from '@sentry/nextjs';
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+  tracesSampleRate: 1.0,
+});
+```
+
+### Analytics (Google Analytics)
+
+```javascript apps/web/lib/analytics.js
+export const pageview = (url) => {
+  window.gtag('config', process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID, {
+    page_path: url,
+  });
+};
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Build fails on Vercel">
+    Check build logs and ensure:
+    - All environment variables are set
+    - Dependencies are correctly installed
+    - No TypeScript errors
+    
+    ```bash
+    # Test build locally
+    npm run build
+    ```
+  </Accordion>
+  
+  <Accordion title="API connection errors">
+    Verify CORS settings on API server allow your domain:
+    
+    ```javascript
+    CORS_ORIGIN=https://app.yourdomain.com
+    ```
+  </Accordion>
+  
+  <Accordion title="Images not loading">
+    Add image domains to next.config.js:
+    
+    ```javascript
+    images: {
+      domains: ['yourdomain.com', 'cdn.yourdomain.com'],
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="API Server Deployment"
+    icon="server"
+    href="/deployment/api-server"
+  >
+    Deploy the API server
+  </Card>
+  <Card
+    title="Environment Variables"
+    icon="gear"
+    href="/development/environment-variables"
+  >
+    Configure environment
+  </Card>
+</CardGroup>

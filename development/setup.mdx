@@ -1,0 +1,535 @@
+---
+title: "Development Setup"
+description: "Complete guide to setting up your Voxora development environment"
+---
+
+## Prerequisites
+
+Before starting development, ensure you have:
+
+<CardGroup cols={2}>
+  <Card title="Node.js 18+" icon="node-js">
+    Download from [nodejs.org](https://nodejs.org/)
+  </Card>
+  <Card title="Docker Desktop" icon="docker">
+    Required for local services
+  </Card>
+  <Card title="Git" icon="git">
+    For version control
+  </Card>
+  <Card title="Code Editor" icon="code">
+    VS Code recommended
+  </Card>
+</CardGroup>
+
+## Initial Setup
+
+<Steps>
+  <Step title="Fork Repository">
+    Fork [voxora-cloud/voxora](https://github.com/voxora-cloud/voxora) on GitHub
+  </Step>
+  <Step title="Clone Your Fork">
+    ```bash
+    git clone https://github.com/<your-username>/voxora.git
+    cd voxora
+    ```
+  </Step>
+  <Step title="Install Dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  <Step title="Configure Environment">
+    Copy development environment files:
+    ```bash
+    cp apps/api/.env.development apps/api/.env
+    cp apps/web/.env.development apps/web/.env
+    ```
+  </Step>
+  <Step title="Start Services">
+    ```bash
+    npm run dev:full
+    ```
+  </Step>
+</Steps>
+
+## Development Workflow
+
+### Daily Development
+
+<CodeGroup>
+
+```bash Start everything
+# Start Docker + dev servers
+npm run dev:full
+```
+
+```bash Start separately
+# Terminal 1: Start Docker services
+npm run docker:start
+
+# Terminal 2: Start dev servers
+npm run dev
+```
+
+```bash Individual apps
+# Start only web app
+npm run dev -w apps/web
+
+# Start only API
+npm run dev -w apps/api
+```
+
+</CodeGroup>
+
+### Making Changes
+
+<Steps>
+  <Step title="Create Feature Branch">
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+  </Step>
+  <Step title="Make Changes">
+    Edit files in your code editor
+  </Step>
+  <Step title="Test Locally">
+    Verify changes work correctly
+  </Step>
+  <Step title="Lint & Format">
+    ```bash
+    npm run lint
+    npm run format
+    ```
+  </Step>
+  <Step title="Commit Changes">
+    ```bash
+    git add .
+    git commit -m "feat: add new feature"
+    ```
+  </Step>
+</Steps>
+
+## Development Tools
+
+### VS Code Extensions
+
+Install these recommended extensions:
+
+```json .vscode/extensions.json
+{
+  "recommendations": [
+    "aaron-bond.better-comments",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "mongodb.mongodb-vscode",
+    "ms-azuretools.vscode-docker"
+  ]
+}
+```
+
+### VS Code Settings
+
+Create `.vscode/settings.json`:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ]
+}
+```
+
+### Git Hooks
+
+Set up pre-commit hooks with Husky:
+
+```bash
+npm install -D husky lint-staged
+
+# Initialize husky
+npx husky install
+
+# Add pre-commit hook
+npx husky add .husky/pre-commit "npx lint-staged"
+```
+
+Add to `package.json`:
+
+```json
+{
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,mdx}": [
+      "prettier --write"
+    ]
+  }
+}
+```
+
+## Hot Reloading
+
+### Web App (Next.js)
+
+Next.js automatically hot reloads on file changes:
+
+- **Fast Refresh**: Preserves component state
+- **Turbopack**: Ultra-fast bundling (Next.js 15)
+- **Instant Updates**: See changes immediately
+
+### API Server (Express)
+
+API uses nodemon for auto-restart:
+
+```json package.json
+{
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  }
+}
+```
+
+<Tip>
+  Install `nodemon` globally for better performance:
+  ```bash
+  npm install -g nodemon
+  ```
+</Tip>
+
+## Database Management
+
+### MongoDB
+
+Access MongoDB via:
+
+<Tabs>
+  <Tab title="Mongo Express">
+    Web UI at [http://localhost:8081](http://localhost:8081)
+    
+    - Username: `admin`
+    - Password: `pass`
+  </Tab>
+  
+  <Tab title="MongoDB Compass">
+    Connection string:
+    ```
+    mongodb://admin:password@localhost:27017/voxora?authSource=admin
+    ```
+  </Tab>
+  
+  <Tab title="CLI">
+    ```bash
+    docker exec -it voxora-mongodb mongosh -u admin -p password
+    ```
+  </Tab>
+</Tabs>
+
+### Redis
+
+<Tabs>
+  <Tab title="Redis CLI">
+    ```bash
+    docker exec -it voxora-redis redis-cli
+    
+    # Common commands
+    KEYS *              # List all keys
+    GET key             # Get value
+    DEL key             # Delete key
+    FLUSHALL            # Clear all data
+    ```
+  </Tab>
+  
+  <Tab title="Redis Commander">
+    Install Redis Commander:
+    ```bash
+    npm install -g redis-commander
+    redis-commander --redis-host localhost
+    ```
+    
+    Access at [http://localhost:8081](http://localhost:8081)
+  </Tab>
+</Tabs>
+
+## Testing
+
+### Run Tests
+
+<CodeGroup>
+
+```bash All tests
+npm run test
+```
+
+```bash Watch mode
+npm run test:watch
+```
+
+```bash Coverage
+npm run test:coverage
+```
+
+```bash Specific app
+npm run test -w apps/api
+npm run test -w apps/web
+```
+
+</CodeGroup>
+
+### Writing Tests
+
+Example test structure:
+
+```javascript __tests__/api/auth.test.js
+import request from 'supertest';
+import app from '../../src/app';
+
+describe('POST /api/v1/auth/login', () => {
+  it('should login with valid credentials', async () => {
+    const response = await request(app)
+      .post('/api/v1/auth/login')
+      .send({
+        email: 'test@example.com',
+        password: 'password123'
+      });
+      
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('token');
+  });
+  
+  it('should reject invalid credentials', async () => {
+    const response = await request(app)
+      .post('/api/v1/auth/login')
+      .send({
+        email: 'test@example.com',
+        password: 'wrongpassword'
+      });
+      
+    expect(response.status).toBe(401);
+  });
+});
+```
+
+## Debugging
+
+### VS Code Debug Configuration
+
+Create `.vscode/launch.json`:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug API",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/apps/api",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug Web",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/apps/web",
+      "console": "integratedTerminal"
+    }
+  ]
+}
+```
+
+### Server Logs
+
+Enable detailed logging:
+
+```javascript apps/api/.env
+LOG_LEVEL=debug
+```
+
+View logs:
+
+```bash
+# Docker logs
+docker logs voxora-mongodb
+docker logs voxora-redis
+
+# Application logs
+npm run dev -w apps/api
+```
+
+## Environment Variables
+
+### Required Variables
+
+<Tabs>
+  <Tab title="apps/api/.env">
+    ```bash
+    # Server
+    PORT=3002
+    NODE_ENV=development
+    
+    # Database
+    MONGODB_URI=mongodb://admin:password@localhost:27017/voxora?authSource=admin
+    
+    # Cache
+    REDIS_HOST=localhost
+    REDIS_PORT=6379
+    
+    # Auth
+    JWT_SECRET=your-secret-key-change-in-production
+    JWT_EXPIRES_IN=7d
+    
+    # CORS
+    CORS_ORIGIN=http://localhost:3000
+    
+    # Email (MailHog for dev)
+    SMTP_HOST=localhost
+    SMTP_PORT=1025
+    EMAIL_FROM=noreply@voxora.cloud
+    ```
+  </Tab>
+  
+  <Tab title="apps/web/.env">
+    ```bash
+    # API
+    NEXT_PUBLIC_API_URL=http://localhost:3002
+    NEXT_PUBLIC_SOCKET_URL=http://localhost:3002
+    
+    # Widget
+    NEXT_PUBLIC_WIDGET_URL=http://localhost:3002/widget
+    
+    # Features
+    NEXT_PUBLIC_ENABLE_ANALYTICS=false
+    ```
+  </Tab>
+</Tabs>
+
+## Common Tasks
+
+### Add a New Dependency
+
+```bash
+# To API
+npm install express-validator -w apps/api
+
+# To Web
+npm install @radix-ui/react-dialog -w apps/web
+
+# To root (build tools)
+npm install -D typescript -w root
+```
+
+### Update Dependencies
+
+```bash
+# Check for updates
+npm outdated
+
+# Update all
+npm update
+
+# Update specific package
+npm update react -w apps/web
+```
+
+### Clean & Rebuild
+
+```bash
+# Remove node_modules
+rm -rf node_modules apps/*/node_modules
+
+# Clean build artifacts
+npm run clean
+
+# Reinstall
+npm install
+
+# Rebuild
+npm run build
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port already in use">
+    Find and kill the process:
+    ```bash
+    # Find process on port 3000
+    lsof -i :3000
+    
+    # Kill it
+    kill -9 <PID>
+    ```
+  </Accordion>
+  
+  <Accordion title="Docker issues">
+    Reset Docker:
+    ```bash
+    npm run docker:stop
+    docker system prune -a
+    npm run docker:start
+    ```
+  </Accordion>
+  
+  <Accordion title="Module not found">
+    Clear and reinstall:
+    ```bash
+    rm -rf node_modules package-lock.json
+    npm install
+    ```
+  </Accordion>
+  
+  <Accordion title="Database connection error">
+    Verify MongoDB is running:
+    ```bash
+    docker ps | grep mongo
+    ```
+    Check connection string in `.env`
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Environment Variables"
+    icon="gear"
+    href="/development/environment-variables"
+  >
+    Complete environment configuration guide
+  </Card>
+  <Card
+    title="Docker Services"
+    icon="docker"
+    href="/development/docker-services"
+  >
+    Managing local Docker services
+  </Card>
+  <Card
+    title="Scripts Reference"
+    icon="terminal"
+    href="/development/scripts"
+  >
+    All available npm scripts
+  </Card>
+  <Card
+    title="Contributing"
+    icon="code-pull-request"
+    href="/contributing/guidelines"
+  >
+    How to contribute to Voxora
+  </Card>
+</CardGroup>

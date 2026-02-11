@@ -1,0 +1,505 @@
+---
+title: "Docker Services"
+description: "Managing local development services with Docker"
+---
+
+## Overview
+
+Voxora uses Docker Compose to run essential services for local development:
+
+- **MongoDB** - Primary database
+- **Redis** - Caching and sessions
+- **Mongo Express** - Database admin UI
+- **MailHog** - Email testing
+
+## Docker Compose Configuration
+
+The configuration file is located at `docker/docker-compose.dev.yml`:
+
+```yaml docker-compose.dev.yml
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: voxora-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: voxora
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - voxora-network
+
+  redis:
+    image: redis:alpine
+    container_name: voxora-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - voxora-network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: voxora-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: pass
+    depends_on:
+      - mongodb
+    networks:
+      - voxora-network
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: voxora-mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - voxora-network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  voxora-network:
+    driver: bridge
+```
+
+## Quick Commands
+
+### Start Services
+
+<CodeGroup>
+
+```bash All services
+npm run docker:start
+# or
+docker-compose -f docker/docker-compose.dev.yml up -d
+```
+
+```bash Specific service
+docker-compose -f docker/docker-compose.dev.yml up -d mongodb
+```
+
+```bash With logs
+docker-compose -f docker/docker-compose.dev.yml up
+```
+
+</CodeGroup>
+
+### Stop Services
+
+<CodeGroup>
+
+```bash All services
+npm run docker:stop
+# or
+docker-compose -f docker/docker-compose.dev.yml down
+```
+
+```bash With volume cleanup
+docker-compose -f docker/docker-compose.dev.yml down -v
+```
+
+</CodeGroup>
+
+### Restart Services
+
+```bash
+docker-compose -f docker/docker-compose.dev.yml restart
+```
+
+## Service Details
+
+### MongoDB
+
+<Card title="MongoDB 27017" icon="database">
+  NoSQL database for storing application data
+</Card>
+
+**Connection Details:**
+- **Host:** `localhost`
+- **Port:** `27017`
+- **Username:** `admin`
+- **Password:** `password`
+- **Database:** `voxora`
+
+**Connection String:**
+```
+mongodb://admin:password@localhost:27017/voxora?authSource=admin
+```
+
+**Useful Commands:**
+
+<CodeGroup>
+
+```bash Connect via CLI
+docker exec -it voxora-mongodb mongosh -u admin -p password
+```
+
+```bash View logs
+docker logs voxora-mongodb
+```
+
+```bash Access shell
+docker exec -it voxora-mongodb bash
+```
+
+</CodeGroup>
+
+**Common MongoDB Commands:**
+
+```javascript
+// Show databases
+show dbs
+
+// Use voxora database
+use voxora
+
+// Show collections
+show collections
+
+// Find all users
+db.users.find()
+
+// Find one conversation
+db.conversations.findOne()
+
+// Count messages
+db.messages.countDocuments()
+
+// Create index
+db.messages.createIndex({ conversationId: 1, createdAt: -1 })
+```
+
+### Redis
+
+<Card title="Redis 6379" icon="server">
+  In-memory data store for caching and sessions
+</Card>
+
+**Connection Details:**
+- **Host:** `localhost`
+- **Port:** `6379`
+- **Password:** None (development only)
+
+**Useful Commands:**
+
+<CodeGroup>
+
+```bash Connect via CLI
+docker exec -it voxora-redis redis-cli
+```
+
+```bash View logs
+docker logs voxora-redis
+```
+
+</CodeGroup>
+
+**Common Redis Commands:**
+
+```bash
+# List all keys
+KEYS *
+
+# Get value
+GET session:abc123
+
+# Set value with expiry
+SETEX cache:users 3600 "data"
+
+# Delete key
+DEL session:xyz789
+
+# Clear all data
+FLUSHALL
+
+# Get info
+INFO
+
+# Monitor commands
+MONITOR
+```
+
+### Mongo Express
+
+<Card title="Mongo Express 8081" icon="chart-simple">
+  Web-based MongoDB admin interface
+</Card>
+
+**Access:** [http://localhost:8081](http://localhost:8081)
+
+**Login Credentials:**
+- **Username:** `admin`
+- **Password:** `pass`
+
+**Features:**
+- View and edit documents
+- Create/drop databases and collections
+- Import/export data
+- Run queries
+- View indexes
+
+### MailHog
+
+<Card title="MailHog 8025" icon="envelope">
+  Email testing tool with SMTP server and web UI
+</Card>
+
+**Web UI:** [http://localhost:8025](http://localhost:8025)
+
+**SMTP Details:**
+- **Host:** `localhost`
+- **Port:** `1025`
+- **No authentication required**
+
+**Features:**
+- View all sent emails
+- Search emails
+- Delete emails
+- Download emails as `.eml`
+
+**Test Sending Email:**
+
+```javascript
+import nodemailer from 'nodemailer';
+
+const transporter = nodemailer.createTransporter({
+  host: 'localhost',
+  port: 1025,
+  secure: false
+});
+
+await transporter.sendMail({
+  from: 'test@voxora.local',
+  to: 'user@example.com',
+  subject: 'Test Email',
+  html: '<p>Hello from Voxora!</p>'
+});
+```
+
+## Managing Data
+
+### Backup Data
+
+<CodeGroup>
+
+```bash MongoDB
+# Export database
+docker exec voxora-mongodb mongodump \
+  -u admin -p password \
+  --authenticationDatabase admin \
+  -d voxora \
+  -o /backup
+
+# Copy to host
+docker cp voxora-mongodb:/backup ./backup
+```
+
+```bash Redis
+# Save snapshot
+docker exec voxora-redis redis-cli SAVE
+
+# Copy to host
+docker cp voxora-redis:/data/dump.rdb ./backup/
+```
+
+</CodeGroup>
+
+### Restore Data
+
+<CodeGroup>
+
+```bash MongoDB
+# Copy backup to container
+docker cp ./backup voxora-mongodb:/backup
+
+# Restore database
+docker exec voxora-mongodb mongorestore \
+  -u admin -p password \
+  --authenticationDatabase admin \
+  -d voxora \
+  /backup/voxora
+```
+
+```bash Redis
+# Stop Redis
+docker-compose -f docker/docker-compose.dev.yml stop redis
+
+# Copy backup
+docker cp ./backup/dump.rdb voxora-redis:/data/
+
+# Start Redis
+docker-compose -f docker/docker-compose.dev.yml start redis
+```
+
+</CodeGroup>
+
+### Reset Data
+
+<Warning>
+  This will delete all data! Use with caution.
+</Warning>
+
+```bash
+# Stop services and remove volumes
+npm run docker:stop
+docker-compose -f docker/docker-compose.dev.yml down -v
+
+# Start fresh
+npm run docker:start
+```
+
+## Health Checks
+
+Check if services are running:
+
+```bash
+docker ps
+```
+
+Expected output:
+
+```
+CONTAINER ID   IMAGE              STATUS          PORTS
+abc123...      mongo:latest       Up 5 minutes    0.0.0.0:27017->27017/tcp
+def456...      redis:alpine       Up 5 minutes    0.0.0.0:6379->6379/tcp
+ghi789...      mongo-express      Up 5 minutes    0.0.0.0:8081->8081/tcp
+jkl012...      mailhog/mailhog    Up 5 minutes    0.0.0.0:1025->1025/tcp, 0.0.0.0:8025->8025/tcp
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port already in use">
+    Find and stop the conflicting process:
+    ```bash
+    # macOS/Linux
+    lsof -i :27017
+    kill -9 <PID>
+    
+    # Or change port in docker-compose.dev.yml
+    ports:
+      - "27018:27017"  # Use 27018 on host
+    ```
+  </Accordion>
+  
+  <Accordion title="Container won't start">
+    Check logs for errors:
+    ```bash
+    docker logs voxora-mongodb
+    docker logs voxora-redis
+    ```
+    
+    Remove and recreate:
+    ```bash
+    docker-compose -f docker/docker-compose.dev.yml rm -f mongodb
+    docker-compose -f docker/docker-compose.dev.yml up -d mongodb
+    ```
+  </Accordion>
+  
+  <Accordion title="Can't connect to MongoDB">
+    Verify container is running:
+    ```bash
+    docker ps | grep mongo
+    ```
+    
+    Test connection:
+    ```bash
+    docker exec -it voxora-mongodb mongosh -u admin -p password
+    ```
+    
+    Check connection string in `.env` matches Docker config.
+  </Accordion>
+  
+  <Accordion title="Mongo Express shows 'Connection error'">
+    Ensure MongoDB is fully started before Mongo Express:
+    ```bash
+    docker-compose -f docker/docker-compose.dev.yml restart mongo-express
+    ```
+  </Accordion>
+  
+  <Accordion title="Out of disk space">
+    Clean up Docker resources:
+    ```bash
+    # Remove unused images
+    docker image prune -a
+    
+    # Remove unused volumes
+    docker volume prune
+    
+    # Remove everything unused
+    docker system prune -a --volumes
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Production Considerations
+
+<Warning>
+  **Do not use these Docker configurations in production!** They are designed for local development only.
+</Warning>
+
+For production:
+
+<CardGroup cols={2}>
+  <Card title="MongoDB Atlas" icon="cloud">
+    Use a managed MongoDB service
+  </Card>
+  <Card title="Redis Cloud" icon="bolt">
+    Use a managed Redis service
+  </Card>
+  <Card title="SendGrid/SES" icon="envelope">
+    Use a transactional email service
+  </Card>
+  <Card title="Cloud Storage" icon="database">
+    Use S3 or Azure Blob Storage
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Development Setup"
+    icon="code"
+    href="/development/setup"
+  >
+    Complete development guide
+  </Card>
+  <Card
+    title="Environment Variables"
+    icon="gear"
+    href="/development/environment-variables"
+  >
+    Configure your environment
+  </Card>
+  <Card
+    title="Scripts Reference"
+    icon="terminal"
+    href="/development/scripts"
+  >
+    All available npm scripts
+  </Card>
+  <Card
+    title="Deployment"
+    icon="rocket"
+    href="/deployment/overview"
+  >
+    Deploy to production
+  </Card>
+</CardGroup>
