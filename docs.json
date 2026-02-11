@@ -1,80 +1,44 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "name": "Voxora",
   "theme": "mint",
-  "logo": {
-    "dark": "/logo/dark.svg",
-    "light": "/logo/light.svg"
-  },
-  "favicon": "/favicon.svg",
+  "name": "Documentation",
   "colors": {
-    "primary": "#0D9373",
-    "light": "#07C983",
-    "dark": "#0D9373",
-    "anchors": {
-      "from": "#0D9373",
-      "to": "#07C983"
-    }
+    "primary": "#0D9373"
   },
-  "topbarLinks": [
-    {
-      "name": "Support",
-      "url": "mailto:support@voxora.cloud"
-    }
-  ],
-  "topbarCtaButton": {
-    "name": "Dashboard",
-    "url": "https://www.voxora.cloud"
-  },
-  "tabs": [],
-  "anchors": [
-    {
-      "name": "GitHub",
-      "icon": "github",
-      "url": "https://github.com/voxora-cloud/voxora"
-    },
-    {
-      "name": "Community",
-      "icon": "discord",
-      "url": "https://github.com/voxora-cloud/voxora/discussions"
-    }
-  ],
-  "navigation": [
-    {
-      "group": "Get Started",
-      "pages": [
-        "introduction",
-        "quickstart",
-        "installation"
-      ]
-    },
-    {
-      "group": "Core Concepts",
-      "pages": [
-        "core-concepts/architecture",
-        "core-concepts/monorepo-structure",
-        "core-concepts/realtime-chat"
-      ]
-    },
-    {
-      "group": "Development",
-      "pages": [
-        "development/setup",
-        "development/environment-variables",
-        "development/docker-services",
-        "development/scripts"
-      ]
-    },
-    {
-      "group": "Deployment",
-      "pages": [
-        "deployment/overview",
-        "deployment/web-app"
-      ]
-    }
-  ],
-  "footerSocials": {
-    "github": "https://github.com/voxora-cloud/voxora",
-    "website": "https://www.voxora.cloud"
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "introduction",
+          "quickstart",
+          "installation"
+        ]
+      },
+      {
+        "group": "Core Concepts",
+        "pages": [
+          "core-concepts/architecture",
+          "core-concepts/monorepo-structure",
+          "core-concepts/realtime-chat"
+        ]
+      },
+      {
+        "group": "Development",
+        "pages": [
+          "development/setup",
+          "development/environment-variables",
+          "development/docker-services",
+          "development/scripts"
+        ]
+      },
+      {
+        "group": "Deployment",
+        "pages": [
+          "deployment/overview",
+          "deployment/web-app"
+        ]
+      }
+    ]
   }
 }
